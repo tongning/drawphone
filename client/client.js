@@ -24,6 +24,8 @@ import ml5 from "ml5";
 // Color picker
 import "@simonwep/pickr/dist/themes/nano.min.css";
 import Pickr from "@simonwep/pickr";
+// Result export
+import html2canvas from "html2canvas";
 
 //prevent page from refreshing when Join game buttons are pressed
 $(function() {
@@ -385,7 +387,6 @@ Lobby.prototype.initialize = function() {
 
 	var self = this;
 	this.leaveButton.click(function() {
-		ga("send", "event", "Lobby", "leave");
 		//refresh the page
 		location.reload();
 	});
@@ -412,7 +413,6 @@ Lobby.prototype.initialize = function() {
 				"Make sure have selected a word pack, a drawing time limit, and that you have at least four players.",
 				"error"
 			);
-			ga("send", "event", "Lobby", "disallowed start attempt");
 		}
 	});
 	this.wordFirstCheckbox.on("change", function() {
@@ -438,7 +438,6 @@ Lobby.prototype.initialize = function() {
 		});
 
 		self.checkIfReadyToStart();
-		ga("send", "event", "Lobby", "show neighbors", self.showNeighbors);
 	});
 	this.timeLimitDropdown.on("change", function() {
 		switch (self.timeLimitDropdown[0].value) {
@@ -478,13 +477,9 @@ Lobby.prototype.initialize = function() {
 			value: self.wordPackDropdown[0].value
 		});
 		self.checkIfReadyToStart();
-
-		ga("send", "event", "Lobby", "word pack change", self.wordPack);
 	});
 	this.viewPreviousResultsButton.click(function() {
 		socket.emit("viewPreviousResults", {});
-
-		ga("send", "event", "Lobby", "view previous results");
 	});
 
 	this.wordFirstCheckbox.prop("checked", false);
@@ -502,18 +497,12 @@ Lobby.prototype.initialize = function() {
 		socket.emit("addBotPlayer");
 	});
 	this.removeBotButton.click(() => socket.emit("removeBotPlayer"));
-
-	ga("send", "event", "Lobby", "created");
 };
 
 Lobby.prototype.show = function(data) {
 	socket.off("disconnect");
 	socket.on("disconnect", function() {
 		swal("Connection lost!", "Reloading...", "error");
-		ga("send", "exception", {
-			exDescription: "Socket connection lost",
-			exFatal: false
-		});
 		//refresh the page
 		location.reload();
 	});
@@ -533,11 +522,6 @@ Lobby.prototype.show = function(data) {
 				}
 			});
 		} else {
-			ga("send", "exception", {
-				exDescription: data.error,
-				exFatal: false
-			});
-
 			if (data.content) {
 				swal({
 					title: data.error,
@@ -629,10 +613,6 @@ Lobby.prototype.update = function(res) {
 			this.viewPreviousResultsButton.addClass(HIDDEN);
 		}
 	} else {
-		ga("send", "exception", {
-			exDescription: res.error,
-			exFatal: false
-		});
 		swal("Error updating lobby", res.error, "error");
 	}
 };
@@ -660,18 +640,6 @@ Lobby.prototype.start = function() {
 		wordPackName: this.wordPack,
 		showNeighbors: this.showNeighbors
 	});
-	ga("send", "event", "Game", "start");
-	ga("send", "event", "Game", "time limit", this.selectedTimeLimit);
-	ga("send", "event", "Game", "word pack", this.wordPack);
-	ga("send", "event", "Game", "number of players", this.userList.realPlayers);
-	ga("send", "event", "Game", "number of bots", this.userList.botPlayers);
-	ga(
-		"send",
-		"event",
-		"Game",
-		"number of total players",
-		this.userList.numberOfPlayers
-	);
 };
 
 Game.prototype = Object.create(Screen.prototype);
@@ -722,13 +690,6 @@ Game.prototype.initialize = function() {
 				self.canvas.isBlank = false;
 				//submit
 				self.onDone();
-				ga(
-					"send",
-					"event",
-					"Drawing",
-					"timer forced submit",
-					self.timeLimit
-				);
 			}, self.timeLimit * 1000);
 		}
 		self.canvas.isBlank = false;
@@ -958,7 +919,7 @@ Game.prototype.sendLink = function(type, data) {
 			data: data
 		}
 	});
-	ga("send", "event", "Link", "submit", type);
+
 	this.onWait();
 };
 
@@ -1027,8 +988,32 @@ function Results(onDoneViewingResults) {
 
 Results.prototype.initialize = function() {
 	var self = this;
+	function saveAs(uri, filename) {
+		var link = document.createElement("a");
+
+		if (typeof link.download === "string") {
+			link.href = uri;
+			link.download = filename;
+
+			//Firefox requires the link to be in the body
+			document.body.appendChild(link);
+
+			//simulate click
+			link.click();
+
+			//remove the link when done
+			document.body.removeChild(link);
+		} else {
+			window.open(uri);
+		}
+	}
 	$("#result-done").on("click", function() {
 		self.onDoneViewingResults();
+	});
+	$("#result-export").on("click", function() {
+		html2canvas(document.body).then(function(canvas) {
+			saveAs(canvas.toDataURL(), "result.png");
+		});
 	});
 };
 
@@ -1159,8 +1144,6 @@ Results.prototype.displayOtherChainButtons = function(
 
 				//jump to top of the page
 				window.scrollTo(0, 0);
-
-				ga("send", "event", "Results", "display another chain");
 			});
 		})(chain, chainsToList);
 		others.append(button);
@@ -1214,10 +1197,8 @@ Waiting.prototype.updateWaitingList = function(res) {
 						tappedPlayer.name + " was kicked.",
 						"success"
 					);
-					ga("send", "event", "User list", "Host kick player");
 				}
 			);
-			ga("send", "event", "User list", "Host tap player");
 		}
 	});
 };
@@ -1264,7 +1245,6 @@ Replace.prototype.sendChoice = function(playerToReplace) {
 	socket.emit("tryReplacePlayer", {
 		playerToReplace: playerToReplace
 	});
-	ga("send", "event", "Player replacement", "replace", self.timeLimit);
 };
 
 function UserList(ul) {
@@ -1602,8 +1582,6 @@ async function renderArchive() {
 
 				//jump to top of the page
 				window.scrollTo(0, 0);
-
-				ga("send", "event", "Archive", "display another chain");
 			});
 		})(results.chains);
 		archiveContent.append(button);
