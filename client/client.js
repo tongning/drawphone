@@ -21,6 +21,9 @@ import swal from "bootstrap-sweetalert";
 import Dexie from "dexie";
 
 import ml5 from "ml5";
+// Color picker
+import "@simonwep/pickr/dist/themes/nano.min.css";
+import Pickr from "@simonwep/pickr";
 
 //prevent page from refreshing when Join game buttons are pressed
 $(function() {
@@ -742,6 +745,13 @@ Game.prototype.initialize = function() {
 			self.onDone();
 		}
 	});
+
+	this.pickr = getColorPicker();
+	this.pickr.setColor("black");
+	this.pickr.on("change", (color, instance) => {
+		this.pickr.setColor(color.toRGBA().toString(0));
+		this.canvas.freeDrawingBrush.color = color.toRGBA().toString(1);
+	});
 };
 
 Game.prototype.show = function() {
@@ -764,6 +774,7 @@ Game.prototype.show = function() {
 Game.prototype.showDrawing = function(disallowChanges) {
 	if (!disallowChanges) {
 		this.canvas = getDrawingCanvas();
+		this.pickr.setColor("black");
 	}
 
 	var shouldShowUndoButtons;
@@ -814,6 +825,7 @@ Game.prototype.showButtons = function(showClearButton) {
 		$("#game-drawing-undo").addClass(HIDDEN);
 	}
 	showElement("#game-buttons");
+	showElement("#color-picker");
 };
 
 Game.prototype.hideBoth = function() {
@@ -1304,6 +1316,52 @@ UserList.prototype.draw = function(list, makeBoxDark, onPress) {
 		listBox.appendTo(this.ul);
 	}
 };
+
+function getColorPicker() {
+	// Simple example, see optional options for more configuration.
+	const pickr = Pickr.create({
+		el: "#color-picker",
+		theme: "nano", // or 'monolith', or 'nano'
+
+		swatches: [
+			"rgba(244, 67, 54, 1)",
+			"rgba(233, 30, 99, 1)",
+			"rgba(156, 39, 176, 1)",
+			"rgba(103, 58, 183, 1)",
+			"rgba(63, 81, 181, 1)",
+			"rgba(33, 150, 243, 1)",
+			"rgba(3, 169, 244, 1)",
+			"rgba(0, 188, 212, 1)",
+			"rgba(0, 150, 136, 1)",
+			"rgba(76, 175, 80, 1)",
+			"rgba(139, 195, 74, 1)",
+			"rgba(205, 220, 57, 1)",
+			"rgba(255, 235, 59, 1)",
+			"rgba(255, 193, 7, 1)"
+		],
+
+		components: {
+			// Main components
+			preview: false,
+			opacity: false,
+			hue: false,
+
+			// Input / output Options
+			interaction: {
+				hex: false,
+				rgba: false,
+				hsla: false,
+				hsva: false,
+				cmyk: false,
+				input: false,
+				clear: false,
+				save: false
+			}
+		}
+	});
+
+	return pickr;
+}
 
 // https://github.com/abhi06991/Undo-Redo-Fabricjs
 function getDrawingCanvas() {
