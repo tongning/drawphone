@@ -1304,7 +1304,7 @@ function getColorPicker() {
 		theme: "nano", // or 'monolith', or 'nano'
 
 		swatches: [
-			"rgba(244, 67, 54, 1)",
+			"rgba(0, 0, 0, 1)",
 			"rgba(233, 30, 99, 1)",
 			"rgba(156, 39, 176, 1)",
 			"rgba(103, 58, 183, 1)",
@@ -1322,20 +1322,20 @@ function getColorPicker() {
 
 		components: {
 			// Main components
-			preview: false,
-			opacity: false,
-			hue: false,
+			preview: true,
+			opacity: true,
+			hue: true,
 
 			// Input / output Options
 			interaction: {
-				hex: false,
-				rgba: false,
-				hsla: false,
-				hsva: false,
-				cmyk: false,
-				input: false,
-				clear: false,
-				save: false
+				hex: true,
+				rgba: true,
+				hsla: true,
+				hsva: true,
+				cmyk: true,
+				input: true,
+				clear: true,
+				save: true
 			}
 		}
 	});
