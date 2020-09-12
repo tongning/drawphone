@@ -696,7 +696,19 @@ Game.prototype.initialize = function() {
 	});
 
 	doneButton.click(function() {
-		self.onDone();
+		swal(
+			{
+				title: "Done?",
+				text:
+					"You won't be able to change your drawing after you submit.",
+				type: "info",
+				showCancelButton: true
+			},
+			function() {
+				self.onDone();
+				//self.start.bind(self)();
+			}
+		);
 	});
 
 	//run done when enter key is pressed in word input
@@ -712,6 +724,13 @@ Game.prototype.initialize = function() {
 	this.pickr.on("change", (color, instance) => {
 		this.pickr.setColor(color.toRGBA().toString(0));
 		this.canvas.freeDrawingBrush.color = color.toRGBA().toString(1);
+	});
+
+	getStrokePicker();
+	document.getElementById("stroke-slider").addEventListener("change", () => {
+		this.canvas.freeDrawingBrush.width = document.getElementById(
+			"stroke-slider"
+		).value;
 	});
 };
 
@@ -787,6 +806,7 @@ Game.prototype.showButtons = function(showClearButton) {
 	}
 	showElement("#game-buttons");
 	showElement("#color-picker");
+	showElement("#stroke-picker");
 };
 
 Game.prototype.hideBoth = function() {
@@ -1296,6 +1316,11 @@ UserList.prototype.draw = function(list, makeBoxDark, onPress) {
 		listBox.appendTo(this.ul);
 	}
 };
+
+function getStrokePicker() {
+	document.getElementById("stroke-picker").innerHTML =
+		"Stroke: <input type='range' min='1' max='30' value='4' class='slider' id='stroke-slider' />";
+}
 
 function getColorPicker() {
 	// Simple example, see optional options for more configuration.
